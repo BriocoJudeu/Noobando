@@ -1,27 +1,47 @@
-#include <iostream>
-#include <iomanip>
-using std::cout;
-using std::cin;
-using std::endl;
+@ECHO OFF
 
-int main(){
-x == 3
-if ( x == 2 )
+SET bot_name=ezBot
+SET bot_exe=ezBot.exe
+SET bot_path=C:\Riot Games\Lobot funcionando - Copy\ezBot.exe
 
-double num, num1, num2, X;
-cout << "1 para subtracao, 2 para adicao, 3 para divisao e 4 para multiplicacao\n"
-<< "Depois digite 2 numeros para calcular\n";
-cin >> num >> num1 >> num2;
-
-if ( num == 1 )
-    cout << num1 - num2 << endl;
-if ( num == 2 )
-    cout << num1 + num2 << endl;
-if ( num == 3 )
-    cout << num1 / num2 << endl;
-if ( num == 4 )
-    cout << num1 * num2 << endl;
+SET elobuddy_path=C:\Program Files (x86)\EloBuddy\EloBuddy.Loader.exe
 
 
-    return 0;
-}
+
+:start
+tasklist /FI "IMAGENAME eq League of Legends.exe" 2>NUL | find /I /N "League of Legends.exe">NUL
+if "%ERRORLEVEL%"=="1" (goto not_running)
+if "%ERRORLEVEL%"=="0" (goto is_running)
+
+goto start
+
+:is_running
+echo LOL is running
+timeout /t 4000
+
+TASKKILL /F /IM "%bot_exe%"
+TASKKILL /F /IM "League of Legends.exe"
+TASKKILL /F /IM "EloBuddy.Loader.exe"
+timeout /t 3
+start "EloBuddy" "%elobuddy_path%"
+start "%bot_name%" "%bot_path%"
+
+goto wait_launch
+
+:not_running
+
+echo LOL is not running
+timeout /t 5
+goto start
+
+:wait_launch
+echo Wait for game
+tasklist /FI "IMAGENAME eq League of Legends.exe" 2>NUL | find /I /N "League of Legends.exe">NUL
+if "%ERRORLEVEL%"=="1" (goto waiting)
+if "%ERRORLEVEL%"=="0" (goto start)
+
+goto waiting
+
+:waiting
+timeout /t 5
+goto wait_launch
