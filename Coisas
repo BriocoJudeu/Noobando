@@ -5,14 +5,14 @@ using std::cin;
 using std::endl;
 
 int main(){
-int positivo, num1, num2;
+int num, num1, num2;
 cout << "- para subtracao, + para adicao, / para divisao e * para multiplicacao"
 << "Depois digite 2 numeros para calcular";
-cin >> positivo >> num1 >> num2;
+cin >> num >> num1 >> num2;
 
-if ( positivo == + )
+if ( num == + )
     cout << num1 + num2 << endl;
-if ( positivo == / )
+if ( num == / )
     cout << num1/num2 << endl;
 
 
