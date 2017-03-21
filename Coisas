@@ -5,15 +5,19 @@ using std::cin;
 using std::endl;
 
 int main(){
-int num, num1, num2;
-cout << "- para subtracao, + para adicao, / para divisao e * para multiplicacao"
-<< "Depois digite 2 numeros para calcular";
+double num, num1, num2;
+cout << "1 para subtracao, 2 para adicao, 3 para divisao e 4 para multiplicacao\n"
+<< "Depois digite 2 numeros para calcular\n";
 cin >> num >> num1 >> num2;
 
-if ( num == + )
+if ( num == 1 )
+    cout << num1 - num2 << endl;
+if ( num == 2 )
     cout << num1 + num2 << endl;
-if ( num == / )
-    cout << num1/num2 << endl;
+if ( num == 3 )
+    cout << num1 / num2 << endl;
+if ( num == 4 )
+    cout << num1 * num2 << endl;
 
 
     return 0;
