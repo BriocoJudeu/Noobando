@@ -5,13 +5,13 @@ using std::cin;
 using std::endl;
 
 int main(){
+x == 3
+if ( x == 2 )
 
 double num, num1, num2, X;
 cout << "1 para subtracao, 2 para adicao, 3 para divisao e 4 para multiplicacao\n"
 << "Depois digite 2 numeros para calcular\n";
 cin >> num >> num1 >> num2;
-x == 3
-if ( x == 2 )
 
 if ( num == 1 )
     cout << num1 - num2 << endl;
