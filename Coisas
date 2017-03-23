@@ -1,118 +1,128 @@
-@echo off & setlocal EnableDelayedExpansion
-cls
-
-set lol=League of Legends.exe
+/*----------------------------------------------------*/
+/* Créditos -> oO>Kssio<Oo™/Kssiobr, STaRDoGGCHaMPioN */
+/* Ano: 2013                                          */  
+/*----------------------------------------------------*/
+#include <iostream>
+#include <direct.h>
+#include <windows.h>
+#include <tlhelp32.h>
  
-set bot=ezBot.exe
-set botPath=C:\Riot Games\Lobot funcionando\ezBot.exe
+using namespace std;
  
-set loader=EloBuddy.Loader.exe
-set loaderPath=C:\Program Files (x86)\EloBuddy\EloBuddy.Loader.exe
+char* GetCurrentDir()
+{
+	char* szRet = (char*)malloc(MAX_PATH);
  
-rem Initialize Array (will take care of multiple LOL Clients)
-set "timeRunning=20"
+	_getcwd(szRet, MAX_PATH);
  
-
-title Antidrop by Framawy [1.0.3]
-echo Antidrop by Framawy & echo Monitoring...
-echo.
+	return szRet;
+}
  
+LPCTSTR SzToLPCTSTR(char* szString)
+{
+	LPTSTR lpszRet;
+	size_t size = strlen(szString)+1;
  
+	lpszRet = (LPTSTR)malloc(MAX_PATH);
+	mbstowcs_s(NULL, lpszRet, size, szString, _TRUNCATE);
  
-:start
-:: Check if bot is open
-tasklist /nh /fi "imagename eq %bot%" | find /i "%bot%" > nul ^
- || (start /MIN "" "%botPath%") ^
- && (echo !time:~0,8%! - Start !bot!)
-call:lowTimeout
+	return lpszRet;
+}
  
-:: Check if Loader is open
-tasklist /nh /fi "imagename eq %loader%" | find /i "%loader%" > nul ^
- || (start /MIN "" "%loaderPath%") ^
- && (echo !time:~0,8%! - Start !loader!)
-call:lowTimeout
+void WaitForProcessToAppear(LPCTSTR lpczProc, DWORD dwDelay)
+{
+	HANDLE			hSnap;
+	PROCESSENTRY32	peProc;
+	BOOL			bAppeared = FALSE;
  
-:: Check if bot is responding
-tasklist /nh /fi "imagename eq %bot%" /fi "status eq not responding" | find /i "%bot%" > nul ^
- && (taskkill /f /fi "status eq not responding" /im "%bot%" > nul) ^
- && (echo !time:~0,8%! - Kill !bot! - Not Responding)
-call:lowTimeout
+	while(!bAppeared)
+	{
+		if((hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)) != INVALID_HANDLE_VALUE)
+		{
+			peProc.dwSize = sizeof(PROCESSENTRY32);
+			if(Process32First(hSnap, &peProc))
+				while(Process32Next(hSnap, &peProc) && !bAppeared)
+					if(!lstrcmp(lpczProc, peProc.szExeFile))
+						bAppeared = TRUE;
+		}
+		CloseHandle(hSnap);
+		Sleep(dwDelay);
+	}
+}
  
-:: Check if Loader is responding
-tasklist /nh /fi "imagename eq %loader%" /fi "status eq not responding" | find /i "%loader%" > nul ^
- && (taskkill /f /fi "status eq not responding" /im "%loader%" > nul) ^
- && (echo !time:~0,8%! - Kill !loader! - Not Responding)
-call:lowTimeout
-    
-:: Check if Lol is responding
-tasklist /nh /fi "imagename eq %lol%" /fi "memusage lt 120000" /fi "status eq not responding" | find /i "%lol%" > nul ^
- && (taskkill /f /fi "status eq not responding" /im "%lol%" > nul) ^
- && (echo !time:~0,8%! - Kill !lol! - Not Responding) ^
- || tasklist /nh /fi "imagename eq %lol%" /fi "memusage gt 300000" /fi "status eq not responding" | find /i "%lol%" > nul ^
- && (taskkill /f /fi "status eq not responding" /im "%lol%" > nul) ^
- && (echo !time:~0,8%! - Kill !lol! - Not Responding)
-call:lowTimeout
-
-REM Check Errors
-:: WerFault (VoliBot related)
-for /f "tokens=2 delims=," %%a in ('tasklist /v /fo:csv /nh ^| findstr /r /c:"WerFault"') do ^
- taskkill /f /t /pid %%a > nul ^
- && (echo !time:~0,8%! - Werfault Error)
-call:lowTimeout
+DWORD GetProcessIdByName(LPCTSTR lpczProc)
+{
+	HANDLE			hSnap;
+	PROCESSENTRY32	peProc;
+	DWORD			dwRet = -1;
  
-:: Failed to Connect / Network Error
-for /f "tokens=2,8 delims=," %%a in ('tasklist /v /fo:csv /nh ^| findstr /r /c:"%lol%"') do (
-    if not defined timeRunning[%%a] (
-        set timeRunning[%%a]=0
-    )
-    set timeTemp=%%b
-    set /a timeTempMin=!timeTemp:~3,2%! * 60
-    set /a timeTempSec=!timeTemp:~6,3%!
-    set /a timeTemp=!timeTempMin! + !timeTempSec!
-    
-    set /a diffTime=!timeTemp! - !timeRunning[%%a]!
-    
-    if !timeRunning[%%a]! EQU !timeTemp! (
-        taskkill /f /t /pid %%a > nul ^
-         && echo !time:~0,8%! - Kill !lol! PID: %%a - Failed to Connect/Network Error    
-    ) else if !diffTime! LSS 3 (
-        if !timeTemp! GTR 3 (
-            taskkill /f /t /pid %%b > nul ^
-             && echo !time:~0,8%! - Kill !lol! PID: %%a - Failed to Connect/Network Error 3s
-        )
-    )
-    set timeRunning[%%a]=!timeTemp!
-)
-call:freeTimeRunning
-call:finalTimeout
-
-goto start
-REM pause
+	if((hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)) != INVALID_HANDLE_VALUE)
+	{
+		peProc.dwSize = sizeof(PROCESSENTRY32);
+		if(Process32First(hSnap, &peProc))
+			while(Process32Next(hSnap, &peProc))
+				if(!lstrcmp(lpczProc, peProc.szExeFile))
+					dwRet = peProc.th32ProcessID;
+	}
+	CloseHandle(hSnap);
  
+	return dwRet;
+}
  
+BOOL InjectDll(DWORD dwPid, char* szDllPath)
+{
+	DWORD	dwMemSize;
+	HANDLE	hProc;
+	LPVOID	lpRemoteMem, lpLoadLibrary;
+	BOOL	bRet = FALSE;
  
-REM Clear Array from memory
-:freeTimeRunning
-for /f "tokens=2 delims=[]" %%i in ('set timeRunning[ 2^>^&1') do (
-    if defined timeRunning[%%i] (
-        tasklist /nh /fi "PID eq %%~i" | find /i "%lol%" > nul ^
-         || set "timeRunning[%%i]="
-    )
-) > nul
-goto:EOF
-
-REM Set timeouts to diminish CPU usage spikes.
-:lowTimeout
-set /a rand=!random! %% 5 + 1
-timeout !rand! > nul
-goto:EOF
+	if((hProc = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_CREATE_THREAD, FALSE, dwPid)) != NULL)
+	{
+		dwMemSize = strlen(szDllPath)+1;
+		if((lpRemoteMem = VirtualAllocEx(hProc, NULL, dwMemSize, MEM_COMMIT, PAGE_READWRITE)) != NULL)
+			if(WriteProcessMemory(hProc, lpRemoteMem, (LPCVOID)szDllPath, dwMemSize, NULL))
+			{
+				lpLoadLibrary = GetProcAddress(GetModuleHandleA("Kernel32.dll"), "LoadLibraryA");
+				if(CreateRemoteThread(hProc, NULL, 0, (LPTHREAD_START_ROUTINE)lpLoadLibrary, lpRemoteMem, 0, NULL) != NULL)
+					bRet = TRUE;
+			}
+	}
+	CloseHandle(hProc);
  
-:finalTimeout
-set /a rand=!random! %% 25 + 3
-timeout !rand! > nul
-goto:EOF
+	return bRet;
+}
  
-REM Ends localization of environment changes in a batch file,
- :: and restores environment variables to their values before
- :: the corresponding setlocal command was run.
-EndLocal
+int main(void)
+{
+	system("title Injector C++ KssioBr");//Nome do injetor que aparecerá no topo da janela
+ 
+	char	szProc[MAX_PATH];//Variável do tipo caractere para receber o nome do processo no qual será injetado
+	char	szDll[MAX_PATH];//Variável do tipo caractere para receber o nome da dll a ser injetada
+ 
+	char*   szDllPath	= (char*)malloc(MAX_PATH);
+	LPTSTR	lpszProc	= NULL;
+	
+	cout << "\n\n\t\t\t-------- Injector C++ oO>Kssio<Oo -------- \n\n";//Titulo do injetor aparece dentro da janela
+	//----------------------------------------------------
+	cout << "\t\t\t\t\tEntre com o nome do processo: ";
+	cin >> szProc;//Ler do teclado e armazena em szProc
+ 
+	cout << "\n\t\t\t\t\tEntre com o nome da dll: ";
+	cin >> szDll;//Ler do teclado e armazena em szDll
+	//----------------------------------------------------
+	szDllPath = GetCurrentDir();
+	strcat_s(szDllPath, MAX_PATH, "\\");
+	strcat_s(szDllPath, MAX_PATH, szDll);
+ 
+	cout << "\t\n\nAguardando Inicio do Jogo..." << endl;
+ 
+	WaitForProcessToAppear(SzToLPCTSTR(szProc), 100);
+ 
+	if(InjectDll(GetProcessIdByName(SzToLPCTSTR(szProc)), szDllPath))
+		cout << "Injetado com Sucesso!" << endl;
+	else
+		cout << "Falha na injeção!" << endl;
+	cout << "\n";
+ 
+	return EXIT_SUCCESS;
+}
